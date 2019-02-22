@@ -84,7 +84,7 @@ process_text() {
 # Log onto IRC and keep the client running.
 startup
 tail -f "$in" \
-    | ircloop \
-    | tee /dev/tty \
-    | process_text
+    | while true; do ircloop; done \
+    | while true; do tee /dev/tty; done \
+    | while true; do process_text; done
 
