@@ -13,12 +13,16 @@ touch $in
 # Output text file read by the slide.
 touch $irc_out
 
+# Program file.
+file=$HOME/sturluson.fut
+
 # Wrapper for invoking GNU timeout on non-GNU systems.
+timeout_bin=$(which timeout)
 timeout() {
     if which /usr/local/bin/gtimeout > /dev/null; then
         /usr/local/bin/gtimeout "$@"
     else
-        /usr/bin/timeout "$@"
+        $timeout_bin "$@"
     fi
 }
 
@@ -30,7 +34,7 @@ startup() {
 
 ircloop() {
     while true; do
-        sic -h irc.freenode.net -n "$name"
+        sic -h irc.libera.chat -n "$name"
         sleep 2
         startup
     done
@@ -62,17 +66,11 @@ run_futhark() {
     if echo "$@" | egrep -q '^(entry|module|type|import|let)'; then
         code="$@"
     else
-        code=$(printf 'let main =\n%s' "$*")
+        code=$(printf 'entry main =\n%s' "$*")
     fi
 
-    allthatjazz=$(cat <<EOF
-    file=sturluson.fut
-    cat > \$file
-    futhark run -w "\$file" 2>&1
-EOF
-               )
-    (echo "$code" | timeout 10 ssh concieggs@napoleon.hiperfit.dk "$allthatjazz") || echo "Something went horribly wrong.  Jotun sabotage?"
-
+    echo "$code" > $file
+    futhark run -w "$file" </dev/null 2>&1
 }
 
 process_text() {
