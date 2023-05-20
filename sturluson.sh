@@ -8,9 +8,6 @@ channels="#futhark #proglangdesign"
 in=$(mktemp)
 touch $in
 
-# Program file.
-file=$HOME/sturluson.fut
-
 startup() {
     (sleep 8
      echo ":m nickserv identify $password" >> "$in"
