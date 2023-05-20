@@ -35,7 +35,7 @@ ircloop() {
 per_line() {
     function=$1
     while IFS='' read -r line; do
-        echo -e "$line" | $function
+        echo "$line" | $function
     done
 }
 
