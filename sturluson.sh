@@ -1,7 +1,5 @@
 #!/bin/sh
 
-irc_out=$HOME/sturluson_irc_out
-
 name=sturluson
 password=$(cat sturluson_password)
 channels="#futhark #proglangdesign"
@@ -9,9 +7,6 @@ channels="#futhark #proglangdesign"
 # Input to the IRC client loop.
 in=$(mktemp)
 touch $in
-
-# Output text file read by the slide.
-touch $irc_out
 
 # Program file.
 file=$HOME/sturluson.fut
