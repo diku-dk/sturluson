@@ -42,7 +42,7 @@ eval_futhark() {
 
 handle_line() {
     IFS='' read -r line
-    channel=$(echo "$line" | cut -d' ' -f1)
+    channel=$(echo "$line" | cut -d':' -f1 | cut -d' ' -f1)
     payload=$(echo "$line" | cut -d: -f2-)
     from=$(echo "$payload" | cut -d' ' -f4)
     msg=$(echo "$payload" | cut -d' ' -f5-)
