@@ -17,9 +17,10 @@ touch $irc_out
 file=$HOME/sturluson.fut
 
 startup() {
-    (sleep 10
-     echo ":m nickserv identify $password" >> $in
-     for c in $channels; do echo ":j $c" >> $in; done) &
+    (sleep 8
+     echo ":m nickserv identify $password" >> "$in"
+     sleep 2
+     for c in $channels; do echo ":j $c" >> "$in"; done) &
 }
 
 ircloop() {
@@ -38,29 +39,34 @@ per_line() {
     done
 }
 
-shorten_line() {
-    # Keep only the most important parts.
-    cut -d ':' -f 2- | cut -d ' ' -f 3-
+shorten() {
+    tr '\n' ' ' | sed -E 's/\s+/ /g' | head -c 300
 }
 
 eval_futhark() {
-    echo "$(timeout 4 futhark eval "$*" 2>&1 | head -c 300)"
+    # This weird construction is to eliminate whitespace.
+    echo $(timeout 4 futhark eval "$*" 2>&1 | shorten)
 }
 
 handle_line() {
     IFS='' read -r line
-    if echo "$line" | egrep -q '<[^>]+> '$name'[:,] '; then
-        code=$(echo "$line" | sed 's/.*'$name'[:,] //')
-        eval_futhark "$code"
-        if [ $? = 124 ]; then
-            echo "Took too long."
+    channel=$(echo "$line" | cut -d' ' -f1)
+    payload=$(echo "$line" | cut -d: -f2-)
+    from=$(echo "$payload" | cut -d' ' -f4)
+    msg=$(echo "$payload" | cut -d' ' -f5-)
+    if echo "$msg" | egrep -q $name'[:,] '; then
+        code=$(echo "$msg" | cut -d' ' -f2-)
+        response=$(eval_futhark "$code")
+        if [ "$response" ]; then
+            echo ":m $channel $response"
+        else
+            echo ":m $channel I don't have time for that."
         fi
     fi
 }
 
 process_text() {
-    grep --line-buffered -E "^#" \
-        | per_line shorten_line \
+    grep --line-buffered -E "^#.*<[^>]+> *${name}[:,]" \
         | per_line handle_line >> "$in"
 }
 
