@@ -32,12 +32,11 @@ per_line() {
 }
 
 shorten() {
-    tr '\n' ' ' | sed -E 's/\s+/ /g' | head -c 300
+    tr '\n' ' ' | head -c 300
 }
 
 eval_futhark() {
-    # This weird construction is to eliminate whitespace.
-    echo $(timeout 4 futhark eval "$*" 2>&1 | shorten)
+    timeout 4 futhark eval "$*" 2>&1 | head -c 300 | sed -E 's/\s+$//'
 }
 
 handle_line() {
