@@ -49,7 +49,9 @@ handle_line() {
         code=$(echo "$msg" | cut -d' ' -f2-)
         response=$(eval_futhark "$code")
         if [ "$response" ]; then
-            echo ":m $channel $response"
+            echo "$response" | while IFS='' read -r line; do
+                echo ":m $channel $line"
+            done
         else
             echo ":m $channel I don't have time for that."
         fi
