@@ -4,26 +4,6 @@ name=sturluson
 password=$(cat sturluson_password)
 channels="#futhark #proglangdesign"
 
-# Input to the IRC client loop.
-in=$(mktemp)
-touch $in
-
-startup() {
-    (sleep 8
-     echo ":m nickserv identify $password" >> "$in"
-     sleep 2
-     for c in $channels; do echo ":j $c" >> "$in"; done) &
-}
-
-ircloop() {
-    while true; do
-        sic -h irc.libera.chat -n "$name"
-        sleep 2
-        startup
-    done
-}
-
-
 per_line() {
     function=$1
     while IFS='' read -r line; do
@@ -39,6 +19,19 @@ eval_futhark() {
     timeout 4 futhark eval "$*" 2>&1 | head -c 300 | sed -E 's/\s+$//'
 }
 
+eval_line() {
+    channel=$1
+    code=$2
+    response=$(eval_futhark "$code")
+    if [ "$response" ]; then
+        echo "$response" | while IFS='' read -r line; do
+            echo ":m $channel $line"
+        done
+    else
+        echo ":m $channel I don't have time for that."
+    fi
+}
+
 handle_line() {
     IFS='' read -r line
     channel=$(echo "$line" | cut -d':' -f1 | cut -d' ' -f1)
@@ -47,14 +40,7 @@ handle_line() {
     msg=$(echo "$payload" | cut -d' ' -f5-)
     if echo "$msg" | egrep -q $name'[:,] '; then
         code=$(echo "$msg" | cut -d' ' -f2-)
-        response=$(eval_futhark "$code")
-        if [ "$response" ]; then
-            echo "$response" | while IFS='' read -r line; do
-                echo ":m $channel $line"
-            done
-        else
-            echo ":m $channel I don't have time for that."
-        fi
+        eval_line "$channel" "$code"
     fi
 }
 
@@ -63,10 +49,34 @@ process_text() {
         | per_line handle_line >> "$in"
 }
 
-# Log onto IRC and keep the client running.
-startup
-tail -n 0 -f "$in" \
-    | while true; do ircloop; done \
-    | while true; do tee /dev/tty; done \
-    | while true; do process_text; done
+startup() {
+    in=$1
+    (sleep 8
+     echo ":m nickserv identify $password" >> "$in"
+     sleep 2
+     for c in $channels; do echo ":j $c" >> "$in"; done) &
+}
 
+ircloop() {
+    while true; do
+        sic -h irc.libera.chat -n "$name"
+        sleep 2
+        startup
+    done
+}
+
+if [ $# -gt 0 ]; then
+    eval_line "#channel" "$@"
+else
+    # Input to the IRC client loop.
+    in=$(mktemp)
+    touch $in
+
+    # Log onto IRC and keep the client running.
+    startup "$in"
+    tail -n 0 -f "$in" \
+        | while true; do ircloop; done \
+        | while true; do tee /dev/tty; done \
+        | while true; do process_text; done
+
+fi
