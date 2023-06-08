@@ -24,7 +24,7 @@ eval_line() {
     code=$2
     response=$(eval_futhark "$code")
     if [ "$response" ]; then
-        echo "$response" | while IFS='' read -r line; do
+        echo "$response" | ./print.py | while IFS='' read -r line; do
             echo ":m $channel $line"
         done
     else
