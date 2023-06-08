@@ -5,6 +5,7 @@
 # stdin.
 
 import futhark_data
+import string
 import sys
 
 def to_string(v):
@@ -16,6 +17,8 @@ def to_string(v):
 
 inp = sys.stdin.read()
 try:
-    print(next(futhark_data.loads(inp)).astype('byte').tobytes().decode('utf-8'))
+    s = next(futhark_data.loads(inp)).astype('byte').tobytes().decode('utf-8')
+    assert(all(c in string.printable for c in s))
+    print(s)
 except:
     print(inp, end='')
