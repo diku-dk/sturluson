@@ -20,16 +20,18 @@ eval_futhark() {
 }
 
 eval_line() {
-    channel=$1
-    code=$2
+    code=$1
     response=$(eval_futhark "$code")
     if [ "$response" ]; then
-        echo "$response" | ./print.py | while IFS='' read -r line; do
-            echo ":m $channel $line"
-        done
+        echo "$response" | ./print.py
     else
-        echo ":m $channel I don't have time for that."
+        echo "I don't have time for that."
     fi
+}
+
+on_output() {
+    channel=$1
+    awk '{print ":m", CHANNEL, $0}' CHANNEL=${channel}
 }
 
 handle_line() {
@@ -40,7 +42,7 @@ handle_line() {
     msg=$(echo "$payload" | cut -d' ' -f5-)
     if echo "$msg" | egrep -q $name'[:,] '; then
         code=$(echo "$msg" | cut -d' ' -f2-)
-        eval_line "$channel" "$code"
+        eval_line "$code" | on_output "$channel"
     fi
 }
 
@@ -66,7 +68,7 @@ ircloop() {
 }
 
 if [ $# -gt 0 ]; then
-    eval_line "#channel" "$@"
+    eval_line "$@" | on_output '#channel'
 else
     # Input to the IRC client loop.
     in=$(mktemp)
