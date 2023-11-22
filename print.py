@@ -17,7 +17,9 @@ def to_string(v):
 
 inp = sys.stdin.read()
 try:
-    s = next(futhark_data.loads(inp)).astype('byte').tobytes().decode('utf-8')
+    v = next(futhark_data.loads(inp))
+    assert(len(v.shape) == 1)
+    s = v.astype('byte').tobytes().decode('utf-8')
     assert(all(c in string.printable for c in s))
     print(s)
 except:
