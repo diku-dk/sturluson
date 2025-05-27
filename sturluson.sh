@@ -60,10 +60,11 @@ startup() {
 }
 
 ircloop() {
+    in=$1
     while true; do
         sic -h irc.libera.chat -n "$name"
         sleep 2
-        startup
+        startup "$in"
     done
 }
 
@@ -77,7 +78,7 @@ else
     # Log onto IRC and keep the client running.
     startup "$in"
     tail -n 0 -f "$in" \
-        | while true; do ircloop; done \
+        | while true; do ircloop "$in"; done \
         | while true; do tee /dev/tty; done \
         | while true; do process_text; done
 
