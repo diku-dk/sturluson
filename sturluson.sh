@@ -55,7 +55,7 @@ startup() {
     in=$1
     (sleep 8
      echo ":m nickserv identify $password" >> "$in"
-     sleep 2
+     sleep 10
      for c in $channels; do echo ":j $c" >> "$in"; done) &
 }
 
